@@ -6,5 +6,6 @@ Init whitelist
 
 ```sh
 WHITELIST=YOUR_PATH
-systemctl list-units --type=service --state=running --no-legend | awk '{print $1}' | sort > ${WHITELIST}
+sudo chmod u=rw,g=,o= ${WHITELIST}
+systemctl list-units --type=service --state=running --property=Name --value --no-legend | sort | sudo tee ${WHITELIST} > /dev/null
 ```
