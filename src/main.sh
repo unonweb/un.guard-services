@@ -32,7 +32,13 @@ function main {
 		source "${PATH_DEFAULTS}"
 	fi
 
-	# Ensure the whitelist file exists on first run
+	# MKDIR state
+	if [[ ! -d "${STATE_DIR}" ]]; then
+		log "<6> Creating state dir at: ${STATE_DIR}"
+		mkdir -p "${STATE_DIR}"
+	fi
+
+	# CHECK whitelist file
 	if [[ ! -f "${WHITELIST}" ]]; then
 		log "<3> Whitelist file not found: ${WHITELIST}"
 		exit 1
