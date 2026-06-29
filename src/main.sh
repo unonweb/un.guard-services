@@ -12,6 +12,9 @@ PATH_DEFAULTS="${SCRIPT_PARENT}/defaults.cfg"
 
 HOSTNAME=$(hostname)
 
+# IMPORTS
+source "${SCRIPT_DIR}/lib/cleanup_cache.sh"
+
 function main {
 
 	if [ "${UID}" -ne 0 ]; then
@@ -45,22 +48,8 @@ function main {
 	local -a new_services
 	mapfile -t new_services < <(comm -13 <(sort "${WHITELIST}") <(echo "${current_services}"))
 	
-	# Clean up the cache of records older than 48 hours to keep it tidy
-	if [[ -f "${CACHE}" ]]; then
-		# Keeps only lines where the timestamp is within the last 48 hours
-		# Format in cache: EPOCH_TIMESTAMP|SERVICE_NAME
-		local current_time=$(date +%s)
-		local cutoff_time=$(( current_time - (CACHE_TTL_HOURS * 3600) ))
-		# Cache pruning
-		# Only keep timestamps that are younger than cutoff_time
-		local tmp_cache=$(mktemp)
-		while IFS='|' read -r timestamp service; do
-			if (( timestamp >= cutoff_time )); then
-				echo "${timestamp}|${service}" >> "${tmp_cache}"
-			fi
-		done < "${CACHE}"
-		mv "${tmp_cache}" "${CACHE}"
-	fi
+	# Cleanup Cache
+	cleanup_cache
 
 	# Process new services and filter out recent alerts
 	local alert_msg=""
@@ -69,7 +58,7 @@ function main {
 		[[ -z "${service}" ]] && continue
 
 		# Check if this service was already alerted within the cache window
-		if [[ -f "${CACHE}" ]] && grep --quiet --fixed-strings "|${service}" "${CACHE}"; then
+		if [[ -f "${CACHE_FILE}" ]] && grep --quiet --fixed-strings "|${service}" "${CACHE_FILE}"; then
 			# Service found in cache, skip alerting
 			echo "Skipping alert for '${service}' (already alerted within past ${CACHE_TTL_HOURS} hours)."
 			continue
@@ -78,7 +67,7 @@ function main {
 		alert_msg+="NEW SERVICE: ${service}\n"
 
 		# Log the alert to the cache with the current epoch timestamp
-		echo "$(date +%s)|${service}" >> "${CACHE}"
+		echo "$(date +%s)|${service}" >> "${CACHE_FILE}"
 	done
 
 	# If new services are found, send an email alert
