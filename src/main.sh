@@ -14,6 +14,7 @@ HOSTNAME=$(hostname)
 
 # IMPORTS
 source "${SCRIPT_DIR}/lib/cleanup_cache.sh"
+source "${SCRIPT_DIR}/lib/log.sh"
 
 function main {
 
@@ -32,10 +33,10 @@ function main {
 
 	# Ensure the whitelist file exists on first run
 	if [[ ! -f "${WHITELIST}" ]]; then
-		echo "Error: Whitelist file not found: ${WHITELIST}"
+		log "<3> Whitelist file not found: ${WHITELIST}"
 		exit 1
 	else
-		echo "Using whitelist: ${WHITELIST}"
+		log "<6> Using whitelist: ${WHITELIST}"
 	fi
 
 	# SET current_services
@@ -60,7 +61,7 @@ function main {
 		# Check if this service was already alerted within the cache window
 		if [[ -f "${CACHE_FILE}" ]] && grep --quiet --fixed-strings "|${service}" "${CACHE_FILE}"; then
 			# Service found in cache, skip alerting
-			echo "Skipping alert for '${service}' (already alerted within past ${CACHE_TTL_HOURS} hours)."
+			log "<6>Skipping alert for '${service}' (already alerted within past ${CACHE_TTL_HOURS} hours)."
 			continue
 		fi
 
