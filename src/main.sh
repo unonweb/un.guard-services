@@ -15,6 +15,7 @@ HOSTNAME=$(hostname)
 # IMPORTS
 source "${SCRIPT_DIR}/lib/cleanup_cache.sh"
 source "${SCRIPT_DIR}/lib/log.sh"
+source "${SCRIPT_DIR}/lib/alert.sh"
 
 function main {
 
@@ -72,25 +73,7 @@ function main {
 	done
 
 	# ALERT
-
-	if (( MAIL_ALERT )) && [[ -z "${MAIL_TO}" ]]; then
-		log "<3> Required var not set: MAIL_TO"
-	fi
-
-	if [[ -n "${alert_msg}" ]]; then
-
-		# ALERT
-		alert_msg_header+="DATE: $(date "+%Y-%m-%d %H:%M:%S")\n"
-		alert_msg_header+="HOSTNAME: ${HOSTNAME}\n"
-		alert_msg_header+="---\n\n"
-		alert_msg_header+="NEW SERVICES:\n"
-		
-		if (( MAIL_ALERT )); then
-			echo -e "${alert_msg_header}${alert_msg}" | \
-			mail -s "${MAIL_SUBJECT}" "${MAIL_TO}" 2>/dev/null
-		fi
-	
-	fi
+	alert "${alert_msg}
 }
 
 main
