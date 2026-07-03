@@ -32,6 +32,16 @@ function main {
 		source "${PATH_DEFAULTS}"
 	fi
 
+	# CHECK vars
+	for var in STATE_DIR WHITELIST; do
+		if [[ -z "${!var}" ]]; then
+			log "<3> Required var missing: ${var}"
+			exit 1
+		fi
+	done
+
+	CACHE_FILE="${STATE_DIR}/cache.txt"
+
 	# MKDIR state
 	if [[ ! -d "${STATE_DIR}" ]]; then
 		log "<6> Creating state dir at: ${STATE_DIR}"
