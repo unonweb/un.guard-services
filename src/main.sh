@@ -64,18 +64,23 @@ function main {
 	# 'comm -13' suppresses lines unique to file1 (whitelist) and lines common to both.
 	# It outputs ONLY lines unique to file2 (currently running but not whitelisted).
 	local -a new_services
-	mapfile -t new_services < <(comm -13 <(sort "${WHITELIST}") <(echo "${current_services}"))
+	# mapfile -t new_services < <(comm -13 <(sort "${WHITELIST}") <(echo "${current_services}"))
+	mapfile -t new_services < <(grep --invert-match --line-regexp --extended-regexp --file "${WHITELIST}" <<< "${current_services}")
+	# --invert-match: select non-matching lines
+	# --line-regexp: select only those matches that exactly match the whole line
+	# --file: read patterns from FILE, one per line
 	
-	# Cleanup Cache
+	# CLEANUP cache
 	cleanup_cache
 
 	# Process new services and filter out recent alerts
 	local alert_msg=""
+
 	for service in "${new_services[@]}"; do
-		# Skip empty lines if any
+		# SKIP empty lines if any
 		[[ -z "${service}" ]] && continue
 
-		# Check if this service was already alerted within the cache window
+		# CHECK if this service was already alerted within the cache window
 		if [[ -f "${CACHE_FILE}" ]] && grep --quiet --fixed-strings "|${service}" "${CACHE_FILE}"; then
 			# Service found in cache, skip alerting
 			log "<6>Skipping alert for '${service}' (already alerted within past ${CACHE_TTL_HOURS} hours)."
@@ -84,7 +89,7 @@ function main {
 
 		alert_msg+="- ${service}\n"
 
-		# Log the alert to the cache with the current epoch timestamp
+		# LOG the alert to the cache with the current epoch timestamp
 		echo "$(date +%s)|${service}" >> "${CACHE_FILE}"
 	done
 
